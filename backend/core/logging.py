@@ -37,12 +37,12 @@ def setup_logging() -> None:
         cache_logger_on_first_use=True,
     )
 
-    logging.basicConfig(
-        format="%(message)s",
-        stream=sys.stdout if not log_file else None,
-        filename=log_file,
-        level=log_level,
-    )
+    log_kwargs = {"format": "%(message)s", "level": log_level}
+    if log_file:
+        log_kwargs["filename"] = log_file
+    else:
+        log_kwargs["stream"] = sys.stdout
+    logging.basicConfig(**log_kwargs)
 
 
 def get_logger(name: str = None) -> structlog.stdlib.BoundLogger:
