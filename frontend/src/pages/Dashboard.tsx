@@ -1,0 +1,188 @@
+import { useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
+import { Activity, Shield, Siren, AlertTriangle, Network, Gauge } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { dashboardApi } from '@/services/api'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import type { DashboardStats, TrafficTimeline, Threat } from '@/types'
+
+const COLORS = ['#22c55e', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899']
+
+export default function Dashboard() {
+  const { data: stats, isLoading } = useQuery<DashboardStats>({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const { data } = await dashboardApi.stats(24)
+      return data
+    },
+    refetchInterval: 10000,
+  })
+
+  const { data: threats = [] } = useQuery<Threat[]>({
+    queryKey: ['recent-threats'],
+    queryFn: async () => {
+      const { data } = await dashboardApi.recentThreats(5)
+      return data
+    },
+    refetchInterval: 15000,
+  })
+
+  const { data: timeline = [] } = useQuery<TrafficTimeline[]>({
+    queryKey: ['traffic-timeline'],
+    queryFn: async () => {
+      const { data } = await dashboardApi.trafficTimeline(24)
+      return data
+    },
+    refetchInterval: 30000,
+  })
+
+  const statCards = [
+    { title: 'Packets Captured', value: stats?.total_packets ?? 0, icon: Network, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { title: 'Active Flows', value: stats?.active_flows ?? 0, icon: Activity, color: 'text-green-500', bg: 'bg-green-500/10' },
+    { title: 'Threats Detected', value: stats?.total_threats ?? 0, icon: Siren, color: 'text-red-500', bg: 'bg-red-500/10' },
+    { title: 'Packets/sec', value: stats?.packets_per_second ?? 0, icon: Gauge, color: 'text-yellow-500', bg: 'bg-yellow-500/10', suffix: '/s' },
+  ]
+
+  const pieData = stats?.threats_by_type
+    ? Object.entries(stats.threats_by_type).map(([name, value]) => ({ name, value }))
+    : []
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    )
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Security Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Real-time network security monitoring</p>
+        </div>
+        <Badge variant="success" className="text-xs">
+          <Shield className="h-3 w-3 mr-1" />
+          System Active
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((stat, i) => (
+          <motion.div key={stat.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{stat.title}</p>
+                    <p className="text-2xl font-bold mt-1">
+                      {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
+                      {stat.suffix}
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-full ${stat.bg}`}>
+                    <stat.icon className={`h-6 w-6 ${stat.color}`} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Traffic Timeline (24h)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={timeline}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="time" tick={{ fontSize: 10 }} tickFormatter={(v) => v.split(' ')[1]?.slice(0, 2) + 'h' || v} />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip
+                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                  />
+                  <Line type="monotone" dataKey="packets" stroke="#22c55e" strokeWidth={2} dot={false} name="Packets" />
+                  <Line type="monotone" dataKey="threats" stroke="#ef4444" strokeWidth={2} dot={false} name="Threats" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Threat Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value">
+                    {pieData.map((_, idx) => (
+                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap justify-center gap-2 mt-2">
+                {pieData.map((entry, idx) => (
+                  <div key={entry.name} className="flex items-center gap-1 text-xs">
+                    <div className="w-2 h-2 rounded-full" style={{ background: COLORS[idx % COLORS.length] }} />
+                    <span className="text-muted-foreground">{entry.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Recent Threats</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {threats.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No threats detected</p>
+            ) : (
+              threats.map((threat) => (
+                <div key={threat.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className={`h-4 w-4 ${
+                      threat.severity === 'critical' || threat.severity === 'high' ? 'text-red-500' : 'text-yellow-500'
+                    }`} />
+                    <div>
+                      <p className="text-sm font-medium">{threat.threat_type}</p>
+                      <p className="text-xs text-muted-foreground">{threat.src_ip} → {threat.dst_ip}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={
+                      threat.severity === 'critical' ? 'danger' :
+                      threat.severity === 'high' ? 'warning' : 'info'
+                    }>
+                      {threat.severity}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(threat.created_at).toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}
