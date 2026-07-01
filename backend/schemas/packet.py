@@ -1,6 +1,13 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from datetime import datetime
+from uuid import UUID as _UUID
+
+
+def _uuid_to_str(v):
+    if isinstance(v, _UUID):
+        return str(v)
+    return v
 
 
 class PacketResponse(BaseModel):
@@ -19,6 +26,11 @@ class PacketResponse(BaseModel):
     checksum: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def coerce_id(cls, v):
+        return _uuid_to_str(v)
 
 
 class PacketListResponse(BaseModel):
@@ -49,6 +61,11 @@ class FlowResponse(BaseModel):
     is_complete: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def coerce_id(cls, v):
+        return _uuid_to_str(v)
 
 
 class FlowListResponse(BaseModel):
@@ -86,6 +103,11 @@ class ThreatResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_validator("id", mode="before")
+    @classmethod
+    def coerce_id(cls, v):
+        return _uuid_to_str(v)
+
 
 class ThreatListResponse(BaseModel):
     items: List[ThreatResponse]
@@ -106,6 +128,11 @@ class PredictionResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_validator("id", "flow_id", mode="before")
+    @classmethod
+    def coerce_id(cls, v):
+        return _uuid_to_str(v)
+
 
 class AlertResponse(BaseModel):
     id: str
@@ -125,6 +152,11 @@ class AlertResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("id", "threat_id", mode="before")
+    @classmethod
+    def coerce_id(cls, v):
+        return _uuid_to_str(v)
 
 
 class AlertListResponse(BaseModel):
@@ -151,6 +183,11 @@ class MLModelResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def coerce_id(cls, v):
+        return _uuid_to_str(v)
 
 
 class DashboardStatsResponse(BaseModel):

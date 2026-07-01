@@ -84,8 +84,20 @@ app.include_router(api_router, prefix="/api/v1", tags=["API"])
 
 
 frontend_dist = (Path(__file__).parent / settings.FRONTEND_DIST_PATH).resolve()
-if frontend_dist.is_dir() and (frontend_dist / "index.html").is_file():
-    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+frontend_index = frontend_dist / "index.html"
+if frontend_dist.is_dir() and frontend_index.is_file():
+    from fastapi.responses import FileResponse, HTMLResponse
+
+    if (frontend_dist / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=str(frontend_dist / "assets")), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api/") or full_path.startswith("openapi"):
+            from fastapi.exceptions import HTTPException
+            raise HTTPException(status_code=404)
+        return HTMLResponse(frontend_index.read_bytes())
+
     logger.info("Frontend SPA mounted", path=str(frontend_dist))
 else:
     logger.warning("Frontend dist not found, API-only mode", path=str(frontend_dist))
@@ -122,10 +134,10 @@ if __name__ == "__main__":
 
     port = int(os.getenv("PORT", str(settings.SERVER_PORT)))
     uvicorn.run(
-        "backend.main:app",
+        "main:app",
         host=settings.SERVER_HOST,
         port=port,
-        reload=settings.DEBUG,
-        workers=1,
+        reload=False,
+        workers=settings.WORKERS,
         log_level=settings.LOG_LEVEL.lower(),
     )

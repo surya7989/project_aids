@@ -1,6 +1,13 @@
-from pydantic import BaseModel, EmailStr, ConfigDict, Field
+from pydantic import BaseModel, EmailStr, ConfigDict, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
+from uuid import UUID as _UUID
+
+
+def _uuid_to_str(v):
+    if isinstance(v, _UUID):
+        return str(v)
+    return v
 
 
 class UserBase(BaseModel):
@@ -30,6 +37,18 @@ class UserResponse(UserBase):
     roles: List[str] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def coerce_id(cls, v):
+        return _uuid_to_str(v)
+
+    @field_validator("roles", mode="before")
+    @classmethod
+    def coerce_roles(cls, v):
+        if v and hasattr(v[0], "name"):
+            return [r.name for r in v]
+        return v
 
 
 class UserListResponse(BaseModel):
@@ -79,6 +98,11 @@ class RoleResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def coerce_id(cls, v):
+        return _uuid_to_str(v)
 
 
 class UserRoleAssignment(BaseModel):

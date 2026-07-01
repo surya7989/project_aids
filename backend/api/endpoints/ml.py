@@ -41,6 +41,11 @@ async def train_model(
     current_user: dict = Depends(require_roles(["admin"])),
     session: AsyncSession = Depends(get_session),
 ):
+    import os
+    if not os.path.isfile(dataset_path):
+        from fastapi.exceptions import HTTPException
+        raise HTTPException(status_code=400, detail=f"Dataset file not found: {dataset_path}")
+
     repo = MLModelRepository(session)
 
     try:
@@ -57,7 +62,6 @@ async def train_model(
 
         metrics = pipeline.evaluate(best_model, X_test, y_test)
 
-        import os
         model_path = os.path.join("trained_models", f"model_{best_name}.pkl")
         pipeline.save_model(best_model, model_path)
 
@@ -90,6 +94,8 @@ async def train_model(
             "model_type": best_name,
             "metrics": metrics,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         from ...middleware.error_handler import AppException
         raise AppException(message=str(e), status_code=500)

@@ -83,9 +83,6 @@ async def recent_threats(
     current_user: dict = Depends(get_current_user),
 ):
     from ...schemas.packet import ThreatResponse
-    items, _ = await session.execute(
-        select(Threat).where(Threat.is_deleted == False).order_by(Threat.created_at.desc()).limit(limit)
-    )
     from ...repositories.threat_repository import ThreatRepository
     repo = ThreatRepository(session)
     items_list, _ = await repo.get_all(limit=limit, order_by="created_at", order_desc=True)

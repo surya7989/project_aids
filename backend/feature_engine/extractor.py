@@ -110,10 +110,10 @@ class FeatureExtractor:
 
         if timestamps and len(timestamps) >= 2:
             time_span = (max(timestamps) - min(timestamps)).total_seconds()
-            if time_span < 2:
-                return None
+        else:
+            time_span = 0
 
-            if len(unique_ports) >= 150 and time_span <= 5:
+        if len(unique_ports) >= 150 and time_span <= 5:
                 return {
                     "threat_type": "Port Scan",
                     "severity": "high",

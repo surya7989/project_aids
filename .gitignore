@@ -10,18 +10,37 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
+.eggs/
 venv/
 .venv/
 env/
-.env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Node
 node_modules/
 dist/
 *.tsbuildinfo
 
+# ML models (too large for git)
+*.pkl
+*.joblib
+*.h5
+*.pt
+trained_models/*
+!trained_models/.gitkeep
+
 # OS / IDE
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
 .idea/
 .vscode/
 .gemini/
+
+# Logs
+*.log

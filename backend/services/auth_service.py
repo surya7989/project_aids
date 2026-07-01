@@ -57,6 +57,8 @@ class AuthService:
                 "email": user.email,
                 "username": user.username,
                 "full_name": user.full_name,
+                "is_verified": user.is_verified,
+                "created_at": user.created_at,
                 "roles": ["viewer"],
             },
         }
@@ -103,6 +105,8 @@ class AuthService:
                 "username": user.username,
                 "full_name": user.full_name,
                 "is_active": user.is_active,
+                "is_verified": user.is_verified,
+                "created_at": user.created_at,
                 "roles": roles,
                 "last_login": user.last_login,
             },
