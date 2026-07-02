@@ -1,5 +1,3 @@
-import numpy as np
-import pandas as pd
 from typing import Dict, List, Optional, Any
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -180,7 +178,8 @@ class FeatureExtractor:
         else:
             return 8
 
-    def create_dataframe(self, flow: dict) -> pd.DataFrame:
+    def create_dataframe(self, flow: dict) -> Any:
+        import pandas as pd
         features = self.extract_from_flow(flow)
         df = pd.DataFrame([features])
         return df

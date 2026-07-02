@@ -4,7 +4,7 @@
   "functions": {
     "api/index.py": {
       "runtime": "vercel-python@3.0.0",
-      "maxDuration": 30,
+      "maxDuration": 300,
       "includeFiles": "backend/**"
     }
   },
@@ -13,12 +13,9 @@
   ],
   "env": {
     "ENVIRONMENT": "production",
-    "DEBUG": "false",
+    "VERCEL": "true",
     "CORS_ORIGINS": "[\"*\"]",
     "LOG_LEVEL": "INFO",
     "LOG_FORMAT": "json"
-  },
-  "github": {
-    "silent": true
   }
 }

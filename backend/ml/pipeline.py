@@ -1,17 +1,7 @@
 import pickle
-import numpy as np
-import pandas as pd
+import structlog
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Tuple
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix
-from sklearn.metrics import classification_report
-import xgboost as xgb
-import structlog
-from ..config.settings import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -19,14 +9,15 @@ logger = structlog.get_logger(__name__)
 class MLPipeline:
     def __init__(self):
         self.model: Optional[Any] = None
-        self.scaler: Optional[StandardScaler] = None
-        self.encoder: Optional[LabelEncoder] = None
+        self.scaler: Any = None
+        self.encoder: Any = None
         self.feature_columns: List[str] = []
         self.model_metrics: Dict[str, Any] = {}
         self._models: Dict[str, Any] = {}
         self._is_trained = False
 
-    def load_dataset(self, dataset_path: str) -> pd.DataFrame:
+    def load_dataset(self, dataset_path: str) -> Any:
+        import pandas as pd
         path = Path(dataset_path)
         if not path.exists():
             raise FileNotFoundError(f"Dataset not found: {dataset_path}")
@@ -41,13 +32,18 @@ class MLPipeline:
         logger.info("Dataset loaded", path=dataset_path, shape=df.shape)
         return df
 
-    def clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
+    def clean_data(self, df: Any) -> Any:
+        import numpy as np
         df = df.copy()
         df = df.replace([np.inf, -np.inf], np.nan)
         df = df.fillna(0)
         return df
 
-    def preprocess(self, df: pd.DataFrame, target_column: str = "label") -> Tuple[pd.DataFrame, np.ndarray]:
+    def preprocess(self, df: Any, target_column: str = "label") -> Tuple[Any, Any]:
+        import numpy as np
+        import pandas as pd
+        from sklearn.preprocessing import StandardScaler, LabelEncoder
+
         df = self.clean_data(df)
 
         if target_column in df.columns:
@@ -85,7 +81,12 @@ class MLPipeline:
 
         return pd.DataFrame(X_scaled, columns=self.feature_columns), y
 
-    def train_models(self, X_train: pd.DataFrame, y_train: pd.DataFrame) -> Dict[str, Any]:
+    def train_models(self, X_train: Any, y_train: Any) -> Dict[str, Any]:
+        import numpy as np
+        from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, IsolationForest
+        from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+        import xgboost as xgb
+
         models = {
             "random_forest": RandomForestClassifier(
                 n_estimators=100, max_depth=20, random_state=42, n_jobs=-1
@@ -138,7 +139,11 @@ class MLPipeline:
         logger.info("Best model selected", model=best_name, metrics=results[best_name])
         return best_name
 
-    def evaluate(self, model: Any, X_test: pd.DataFrame, y_test: np.ndarray) -> Dict[str, Any]:
+    def evaluate(self, model: Any, X_test: Any, y_test: Any) -> Dict[str, Any]:
+        import numpy as np
+        from sklearn.ensemble import IsolationForest
+        from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix, classification_report
+
         if isinstance(model, IsolationForest):
             y_pred = model.predict(X_test)
             y_pred = np.where(y_pred == -1, 1, 0)
@@ -200,7 +205,9 @@ class MLPipeline:
         self._is_trained = True
         logger.info("Model loaded", path=str(path))
 
-    def predict(self, features: pd.DataFrame) -> Dict[str, Any]:
+    def predict(self, features: Any) -> Dict[str, Any]:
+        from sklearn.ensemble import IsolationForest
+
         if self.model is None:
             raise RuntimeError("Model not loaded. Call load_model() first.")
 
@@ -212,7 +219,7 @@ class MLPipeline:
 
             try:
                 features_scaled = self.scaler.transform(features)
-            except Exception as e:
+            except Exception:
                 features_scaled = features.values
         else:
             features_scaled = features.values

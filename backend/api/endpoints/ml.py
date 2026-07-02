@@ -1,15 +1,24 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, Query, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, Depends, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 from ...database.session import get_session
 from ...schemas.packet import MLModelResponse
 from ...repositories.threat_repository import MLModelRepository
-from ...ml.pipeline import MLPipeline
 from ...middleware.auth_middleware import get_current_user, require_roles
 
 router = APIRouter()
-pipeline = MLPipeline()
+
+def get_pipeline():
+    try:
+        from ...ml.pipeline import MLPipeline
+        return MLPipeline()
+    except ImportError as e:
+        from fastapi.exceptions import HTTPException
+        raise HTTPException(
+            status_code=501,
+            detail=f"ML dependencies not available in this environment: {e}. Install pandas, numpy, scikit-learn, xgboost."
+        )
 
 
 @router.get("/models", response_model=List[MLModelResponse])
@@ -48,6 +57,7 @@ async def train_model(
 
     repo = MLModelRepository(session)
 
+    pipeline = get_pipeline()
     try:
         df = pipeline.load_dataset(dataset_path)
         df = pipeline.clean_data(df)
@@ -107,6 +117,7 @@ async def predict_from_flow(
     current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
+    pipeline = get_pipeline()
     try:
         from ...feature_engine.extractor import FeatureExtractor
         extractor = FeatureExtractor()
@@ -133,6 +144,7 @@ async def activate_model(
     session: AsyncSession = Depends(get_session),
     current_user: dict = Depends(require_roles(["admin"])),
 ):
+    pipeline = get_pipeline()
     repo = MLModelRepository(session)
     model = await repo.get(model_id)
     if not model:

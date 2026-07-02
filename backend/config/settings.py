@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional
-import os
 
 
 class Settings(BaseSettings):
@@ -8,6 +7,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
+        extra="ignore",
     )
 
     APP_NAME: str = "AI-IDS"
@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     ENVIRONMENT: str = "production"
     RENDER: bool = False
+    VERCEL: bool = False
 
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000
@@ -77,10 +78,17 @@ class Settings(BaseSettings):
     def get_database_url(self) -> str:
         if self.DATABASE_URL:
             url = self.DATABASE_URL
-            if url.startswith("postgresql://") and "+asyncpg" not in url:
-                url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            if "+asyncpg" not in url:
+                if url.startswith("postgres://"):
+                    url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+                elif url.startswith("postgresql://"):
+                    url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
             return url
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+
+    @property
+    def is_serverless(self) -> bool:
+        return self.VERCEL or self.ENVIRONMENT == "production" and self.RENDER
 
 
 settings = Settings()
