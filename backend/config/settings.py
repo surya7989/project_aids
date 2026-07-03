@@ -94,7 +94,7 @@ class Settings(BaseSettings):
 
     @property
     def is_serverless(self) -> bool:
-        return self.VERCEL or self.ENVIRONMENT == "production" and self.RENDER
+        return self.VERCEL or (self.ENVIRONMENT == "production" and self.RENDER)
 
 
 settings = Settings()

@@ -22,11 +22,18 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting AI-IDS application", version=settings.APP_VERSION, environment=settings.ENVIRONMENT)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database tables created")
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables created")
+    except Exception as e:
+        logger.warning("Could not connect to database on startup", error=str(e))
+        logger.warning("App will start without database - ensure DATABASE_URL is configured")
     yield
-    await engine.dispose()
+    try:
+        await engine.dispose()
+    except Exception:
+        pass
     logger.info("Application shutdown complete")
 
 
