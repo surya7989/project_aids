@@ -166,6 +166,12 @@ async def train_model(
                 detail="The uploaded CSV has no valid numeric features for network threat training. Please upload a valid network capture CSV."
             )
 
+        if len(X) < 10:
+            raise HTTPException(
+                status_code=400,
+                detail=f"The dataset must contain at least 10 samples for training. Current dataset has only {len(X)} usable samples."
+            )
+
         from sklearn.model_selection import train_test_split
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 

@@ -161,7 +161,15 @@ else:
             if full_path.startswith("api/") or full_path.startswith("openapi"):
                 from fastapi.exceptions import HTTPException
                 raise HTTPException(status_code=404)
-            return HTMLResponse(frontend_index.read_bytes())
+            if full_path.startswith("assets/"):
+                from fastapi.exceptions import HTTPException
+                raise HTTPException(status_code=404, detail="Asset not found")
+            
+            response = HTMLResponse(frontend_index.read_bytes())
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+            return response
 
         logger.info("Frontend SPA mounted", path=str(frontend_dist))
     else:
