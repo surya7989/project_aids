@@ -37,14 +37,32 @@ class AuthService:
             full_name=full_name,
         )
 
+        # Check if this is the first user in the system — make them admin
+        from sqlalchemy import select, func
+        from ..models.user import User as UserModel
+        user_count = await self.session.scalar(
+            select(func.count(UserModel.id))
+        )
+
+        if user_count <= 1:
+            # First user → assign admin role
+            admin_role = await self.role_repo.get_by_name("admin")
+            if admin_role:
+                await self.user_repo.assign_role(str(user.id), str(admin_role.id))
+
+        # Always assign viewer role too
         viewer_role = await self.role_repo.get_by_name("viewer")
         if viewer_role:
             await self.user_repo.assign_role(str(user.id), str(viewer_role.id))
 
+        # Re-fetch user to get actual roles from DB
+        user = await self.user_repo.get_with_roles(str(user.id))
+        roles = [role.name for role in user.roles] if user.roles else ["viewer"]
+
         await self._log_audit(str(user.id), "USER_REGISTER", "users", str(user.id), {"email": email})
 
         access_token, refresh_token = create_tokens(
-            str(user.id), user.email, ["viewer"]
+            str(user.id), user.email, roles
         )
 
         await self._store_refresh_token(str(user.id), refresh_token)
@@ -59,7 +77,7 @@ class AuthService:
                 "full_name": user.full_name,
                 "is_verified": user.is_verified,
                 "created_at": user.created_at,
-                "roles": ["viewer"],
+                "roles": roles,
             },
         }
 
