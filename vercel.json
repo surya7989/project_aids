@@ -1,20 +1,14 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-   "functions": {
-     "api/index.py": {
-       "maxDuration": 300,
-       "includeFiles": "backend/**"
-     }
-   },
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 300,
+      "includeFiles": "backend/**"
+    }
+  },
   "routes": [
-    { "src": "/api/(.*)", "dest": "api/index.py" }
-  ],
-  "env": {
-    "ENVIRONMENT": "production",
-    "VERCEL": "true",
-    "CORS_ORIGINS": "[\"*\"]",
-    "LOG_LEVEL": "INFO",
-    "LOG_FORMAT": "json"
-  }
+    { "src": "/api/(.*)", "dest": "api/index.py" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
 }
