@@ -1,14 +1,10 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 300,
-      "includeFiles": "backend/**"
-    }
-  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://ai-ids.onrender.com/api/:path*" }
+  ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "api/index.py" },
     { "src": "/(.*)", "dest": "/$1" }
   ]
 }

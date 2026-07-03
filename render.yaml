@@ -2,11 +2,13 @@ services:
   - type: web
     name: ai-ids
     env: python
-    buildCommand: chmod +x build.sh && ./build.sh
+    buildCommand: pip install --no-cache-dir -r requirements.txt
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT --workers 1
     envVars:
       - key: RENDER
         value: "true"
+      - key: VERCEL
+        value: "false"
       - key: ENVIRONMENT
         value: production
       - key: DATABASE_URL
