@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional
+from urllib.parse import urlparse, urlencode, parse_qs
 
 
 class Settings(BaseSettings):
@@ -78,12 +79,17 @@ class Settings(BaseSettings):
     def get_database_url(self) -> str:
         if self.DATABASE_URL:
             url = self.DATABASE_URL
-            if "+asyncpg" not in url:
-                if url.startswith("postgres://"):
-                    url = url.replace("postgres://", "postgresql+asyncpg://", 1)
-                elif url.startswith("postgresql://"):
-                    url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
-            return url
+            parsed = urlparse(url)
+            params = parse_qs(parsed.query)
+            params.pop("channel_binding", None)
+            query = urlencode(params, doseq=True)
+            clean = parsed._replace(query=query).geturl()
+            if "+asyncpg" not in clean:
+                if clean.startswith("postgres://"):
+                    clean = clean.replace("postgres://", "postgresql+asyncpg://", 1)
+                elif clean.startswith("postgresql://"):
+                    clean = clean.replace("postgresql://", "postgresql+asyncpg://", 1)
+            return clean
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     @property
