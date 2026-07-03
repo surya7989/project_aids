@@ -99,3 +99,11 @@ export const mlApi = {
   activateModel: (id: string) => api.post(`/ml/models/${id}/activate`),
   generateSample: () => api.post('/ml/generate-sample'),
 }
+
+export const simulationApi = {
+  generate: (count = 30, attackRatio = 0.2) =>
+    api.post('/simulation/generate', null, { params: { count, attack_ratio: attackRatio } }),
+  populate: (hours = 24) =>
+    api.post('/simulation/populate', null, { params: { hours } }),
+}
+

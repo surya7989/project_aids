@@ -1,15 +1,19 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Activity, Shield, Siren, AlertTriangle, Network, Gauge } from 'lucide-react'
+import { Activity, Shield, Siren, AlertTriangle, Network, Gauge, Zap, Database } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { dashboardApi } from '@/services/api'
+import { Button } from '@/components/ui/button'
+import { dashboardApi, simulationApi } from '@/services/api'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import type { DashboardStats, TrafficTimeline, Threat } from '@/types'
+import toast from 'react-hot-toast'
 
 const COLORS = ['#22c55e', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899']
 
 export default function Dashboard() {
+  const queryClient = useQueryClient()
+
   const { data: stats, isLoading } = useQuery<DashboardStats>({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
@@ -35,6 +39,24 @@ export default function Dashboard() {
       return data
     },
     refetchInterval: 30000,
+  })
+
+  const populateMutation = useMutation({
+    mutationFn: () => simulationApi.populate(24),
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries()
+      toast.success(`Data populated! ${res.data.packets} packets, ${res.data.threats} threats, ${res.data.alerts} alerts created`)
+    },
+    onError: () => toast.error('Failed to populate data'),
+  })
+
+  const generateMutation = useMutation({
+    mutationFn: () => simulationApi.generate(30, 0.2),
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries()
+      toast.success(`Live batch: ${res.data.packets} packets, ${res.data.threats} threats generated`)
+    },
+    onError: () => toast.error('Failed to generate traffic'),
   })
 
   const statCards = [
@@ -63,10 +85,30 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold">Security Dashboard</h1>
           <p className="text-sm text-muted-foreground">Real-time network security monitoring</p>
         </div>
-        <Badge variant="success" className="text-xs self-start sm:self-auto">
-          <Shield className="h-3 w-3 mr-1" />
-          System Active
-        </Badge>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => populateMutation.mutate()}
+            disabled={populateMutation.isPending}
+          >
+            <Database className="h-4 w-4 mr-1" />
+            {populateMutation.isPending ? 'Populating...' : 'Populate 24h Data'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => generateMutation.mutate()}
+            disabled={generateMutation.isPending}
+          >
+            <Zap className="h-4 w-4 mr-1" />
+            {generateMutation.isPending ? 'Generating...' : 'Generate Live Traffic'}
+          </Button>
+          <Badge variant="success" className="text-xs">
+            <Shield className="h-3 w-3 mr-1" />
+            System Active
+          </Badge>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
