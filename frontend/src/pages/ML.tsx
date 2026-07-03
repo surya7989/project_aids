@@ -172,13 +172,13 @@ export default function ML() {
           ) : (
             <div className="space-y-3">
               {models.map((model) => (
-                <div key={model.id} className="p-4 rounded-lg border border-border">
+                <div key={model.id} className="p-4 rounded-lg border border-border overflow-hidden">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
                       <Brain className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-medium">{model.name}</h3>
+                          <h3 className="font-medium truncate max-w-[200px] sm:max-w-[300px]">{model.name}</h3>
                           {model.is_active && <Badge variant="success">Active</Badge>}
                           {model.is_trained ? <Badge variant="info">Trained</Badge> : <Badge variant="warning">Untrained</Badge>}
                         </div>
@@ -199,7 +199,7 @@ export default function ML() {
                     <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground pl-8 sm:pl-0">
                       <span>F1: {(model.f1_macro * 100).toFixed(1)}%</span>
                       {model.training_samples && <span>Samples: {model.training_samples.toLocaleString()}</span>}
-                      {model.training_dataset && <span>Dataset: {model.training_dataset}</span>}
+                      {model.training_dataset && <span className="truncate max-w-[250px]">Dataset: {model.training_dataset}</span>}
                     </div>
                   )}
                 </div>
