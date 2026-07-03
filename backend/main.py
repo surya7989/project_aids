@@ -19,6 +19,51 @@ setup_logging()
 logger = get_logger(__name__)
 
 
+async def seed_default_roles(engine_instance):
+    """Create default roles and promote first user to admin if no admin exists."""
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+    from sqlalchemy import select
+    from .models.user import Role, User, user_roles
+
+    session_factory = async_sessionmaker(engine_instance, class_=AsyncSession, expire_on_commit=False)
+    async with session_factory() as session:
+        try:
+            # Create default roles if they don't exist
+            for role_name, description, is_system in [
+                ("admin", "Full system administrator", True),
+                ("viewer", "Read-only access", True),
+                ("analyst", "Security analyst with threat management", True),
+            ]:
+                existing = await session.execute(select(Role).where(Role.name == role_name))
+                if not existing.scalar_one_or_none():
+                    role = Role(name=role_name, description=description, is_system_role=is_system)
+                    session.add(role)
+                    logger.info("Created role", role=role_name)
+
+            await session.commit()
+
+            # Check if any user has admin role
+            admin_role = await session.execute(select(Role).where(Role.name == "admin"))
+            admin_role = admin_role.scalar_one_or_none()
+            if admin_role:
+                admin_check = await session.execute(
+                    select(user_roles).where(user_roles.c.role_id == admin_role.id)
+                )
+                if not admin_check.first():
+                    # No admin exists - promote the first user
+                    first_user = await session.execute(
+                        select(User).order_by(User.created_at.asc()).limit(1)
+                    )
+                    first_user = first_user.scalar_one_or_none()
+                    if first_user:
+                        first_user.roles.append(admin_role)
+                        await session.commit()
+                        logger.info("Promoted first user to admin", user=first_user.username)
+
+        except Exception as e:
+            logger.warning("Could not seed default roles", error=str(e))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting AI-IDS application", version=settings.APP_VERSION, environment=settings.ENVIRONMENT)
@@ -26,6 +71,7 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Database tables created")
+        await seed_default_roles(engine)
     except Exception as e:
         logger.warning("Could not connect to database on startup", error=str(e))
         logger.warning("App will start without database - ensure DATABASE_URL is configured")
