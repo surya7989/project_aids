@@ -34,14 +34,14 @@ export default function Settings() {
           ) : (
             <div className="space-y-2">
               {settings.map((s) => (
-                <div key={s.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                <div key={s.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-secondary/50 gap-2">
                   <div>
                     <p className="text-sm font-medium">{s.key}</p>
                     <p className="text-xs text-muted-foreground">{s.description}</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
                     <Badge variant="outline">{s.category}</Badge>
-                    <code className="text-xs bg-background px-2 py-1 rounded">
+                    <code className="text-xs bg-background px-2 py-1 rounded break-all max-w-full">
                       {typeof s.value === 'object' ? JSON.stringify(s.value) : String(s.value)}
                     </code>
                   </div>

@@ -52,15 +52,15 @@ export default function ML() {
           <CardTitle className="text-sm font-medium">Train New Model</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               value={datasetPath}
               onChange={(e) => setDatasetPath(e.target.value)}
               placeholder="Path to dataset (e.g., datasets/cicids2017.csv)"
-              className="flex-1 px-3 py-2 rounded-md border border-input bg-background text-sm"
+              className="flex-grow px-3 py-2 rounded-md border border-input bg-background text-sm"
             />
-            <Button onClick={() => trainMutation.mutate(datasetPath)} disabled={!datasetPath || trainMutation.isPending}>
+            <Button onClick={() => trainMutation.mutate(datasetPath)} disabled={!datasetPath || trainMutation.isPending} className="w-full sm:w-auto">
               <Play className="h-4 w-4 mr-2" />
               {trainMutation.isPending ? 'Training...' : 'Start Training'}
             </Button>
@@ -81,11 +81,11 @@ export default function ML() {
             <div className="space-y-3">
               {models.map((model) => (
                 <div key={model.id} className="p-4 rounded-lg border border-border">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Brain className="h-5 w-5 text-primary" />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <Brain className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-medium">{model.name}</h3>
                           {model.is_active && <Badge variant="success">Active</Badge>}
                           {model.is_trained ? <Badge variant="info">Trained</Badge> : <Badge variant="warning">Untrained</Badge>}
@@ -95,7 +95,7 @@ export default function ML() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 self-start sm:self-auto pl-8 sm:pl-0">
                       {model.is_trained && !model.is_active && (
                         <Button variant="outline" size="sm" onClick={() => activateMutation.mutate(model.id)}>
                           <Activity className="h-4 w-4 mr-1" /> Activate
@@ -104,7 +104,7 @@ export default function ML() {
                     </div>
                   </div>
                   {model.f1_macro && (
-                    <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
+                    <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground pl-8 sm:pl-0">
                       <span>F1: {(model.f1_macro * 100).toFixed(1)}%</span>
                       {model.training_samples && <span>Samples: {model.training_samples.toLocaleString()}</span>}
                       {model.training_dataset && <span>Dataset: {model.training_dataset}</span>}

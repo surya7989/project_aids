@@ -35,9 +35,9 @@ export default function Users() {
           ) : (
             <div className="space-y-3">
               {users.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-4 rounded-lg border border-border">
+                <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border border-border gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <span className="text-sm font-medium text-primary">
                         {user.username[0].toUpperCase()}
                       </span>
@@ -47,7 +47,7 @@ export default function Users() {
                       <p className="text-xs text-muted-foreground">{user.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto pl-13 sm:pl-0">
                     {user.roles.map((role) => (
                       <Badge key={role} variant="secondary">{role}</Badge>
                     ))}

@@ -35,18 +35,18 @@ export default function Logs() {
           ) : (
             <div className="space-y-2">
               {logs.map((log: any) => (
-                <div key={log.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 text-sm">
-                  <div className="flex items-center gap-3">
+                <div key={log.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-secondary/30 text-sm gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={log.status === 'success' ? 'success' : 'danger'} className="text-[10px]">
                       {log.status}
                     </Badge>
                     <span className="font-medium">{log.action}</span>
                     <span className="text-muted-foreground">{log.resource}</span>
                     {log.ip_address && (
-                      <span className="text-muted-foreground text-xs">{log.ip_address}</span>
+                      <span className="text-muted-foreground text-xs font-mono">({log.ip_address})</span>
                     )}
                   </div>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground self-start sm:self-auto pl-1 sm:pl-0">
                     {new Date(log.created_at).toLocaleString()}
                   </span>
                 </div>

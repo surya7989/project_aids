@@ -58,12 +58,12 @@ export default function Dashboard() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Security Dashboard</h1>
           <p className="text-sm text-muted-foreground">Real-time network security monitoring</p>
         </div>
-        <Badge variant="success" className="text-xs">
+        <Badge variant="success" className="text-xs self-start sm:self-auto">
           <Shield className="h-3 w-3 mr-1" />
           System Active
         </Badge>
@@ -156,7 +156,7 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground text-center py-4">No threats detected</p>
             ) : (
               threats.map((threat) => (
-                <div key={threat.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">
+                <div key={threat.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-secondary/50 gap-2">
                   <div className="flex items-center gap-3">
                     <AlertTriangle className={`h-4 w-4 ${
                       threat.severity === 'critical' || threat.severity === 'high' ? 'text-red-500' : 'text-yellow-500'
@@ -166,7 +166,7 @@ export default function Dashboard() {
                       <p className="text-xs text-muted-foreground">{threat.src_ip} → {threat.dst_ip}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-start sm:self-auto pl-7 sm:pl-0">
                     <Badge variant={
                       threat.severity === 'critical' ? 'danger' :
                       threat.severity === 'high' ? 'warning' : 'info'

@@ -45,19 +45,19 @@ export default function Threats() {
             <div className="space-y-3">
               {threats.map((threat) => (
                 <div key={threat.id} className="p-4 rounded-lg border border-border bg-card">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-full bg-red-500/10">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-full bg-red-500/10 flex-shrink-0">
                         <Siren className="h-5 w-5 text-red-500" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-medium">{threat.threat_type}</h3>
                           <Badge variant={severityColors[threat.severity as keyof typeof severityColors] || 'secondary'}>
                             {threat.severity}
                           </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-1 font-mono">
                           {threat.src_ip}:{threat.src_port} → {threat.dst_ip}:{threat.dst_port}
                         </p>
                         {threat.explanation && (
@@ -65,7 +65,7 @@ export default function Threats() {
                         )}
                       </div>
                     </div>
-                    <div className="text-right text-xs text-muted-foreground">
+                    <div className="text-left sm:text-right text-xs text-muted-foreground pl-11 sm:pl-0">
                       <div className="mb-1">{(threat.confidence * 100).toFixed(1)}% confidence</div>
                       <div>{new Date(threat.created_at).toLocaleString()}</div>
                     </div>

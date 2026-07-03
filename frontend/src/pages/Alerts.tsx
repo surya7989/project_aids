@@ -67,13 +67,13 @@ export default function Alerts() {
                 <div key={alert.id} className={`p-4 rounded-lg border ${
                   !alert.is_read ? 'border-primary/50 bg-primary/5' : 'border-border'
                 }`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className={`h-5 w-5 ${
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
                         alert.severity === 'critical' ? 'text-red-500' : 'text-yellow-500'
                       }`} />
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-medium">{alert.title}</h3>
                           <Badge variant={severityColors[alert.severity as keyof typeof severityColors] || 'secondary'}>
                             {alert.severity}
@@ -82,12 +82,12 @@ export default function Alerts() {
                             <Badge variant="default" className="text-[10px]">NEW</Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-1 font-mono">
                           {alert.src_ip} → {alert.dst_ip} | {alert.threat_type}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 pl-8 sm:pl-0">
                       {!alert.is_read && (
                         <Button variant="ghost" size="sm" onClick={() => markRead.mutate(alert.id)}>
                           <Eye className="h-4 w-4 mr-1" /> Read
