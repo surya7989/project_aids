@@ -97,4 +97,5 @@ export const mlApi = {
   predict: (flowData: Record<string, unknown>) =>
     api.post('/ml/predict', flowData),
   activateModel: (id: string) => api.post(`/ml/models/${id}/activate`),
+  generateSample: () => api.post('/ml/generate-sample'),
 }

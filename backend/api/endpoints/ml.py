@@ -6,8 +6,74 @@ from ...database.session import get_session
 from ...schemas.packet import MLModelResponse
 from ...repositories.threat_repository import MLModelRepository
 from ...middleware.auth_middleware import get_current_user, require_roles
+import os
 
 router = APIRouter()
+
+
+@router.post("/generate-sample")
+async def generate_sample_dataset(
+    current_user: dict = Depends(require_roles(["admin"])),
+):
+    """Generate a sample IDS dataset for testing ML training."""
+    import random
+    import csv
+
+    os.makedirs("datasets", exist_ok=True)
+    path = "datasets/sample_ids_data.csv"
+
+    headers = [
+        "duration", "protocol_type", "src_bytes", "dst_bytes",
+        "count", "srv_count", "dst_host_count", "dst_host_srv_count",
+        "dst_host_same_srv_rate", "dst_host_diff_srv_rate",
+        "packet_size", "flow_duration", "fwd_packets", "bwd_packets",
+        "fwd_bytes", "bwd_bytes", "flow_bytes_per_sec", "flow_packets_per_sec",
+        "avg_packet_size", "fwd_iat_mean",
+        "label"
+    ]
+
+    attack_types = ["BENIGN", "DDoS", "PortScan", "BruteForce", "BotNet"]
+
+    with open(path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+
+        for _ in range(1000):
+            label = random.choice(attack_types)
+            is_attack = label != "BENIGN"
+
+            row = [
+                random.uniform(0, 60) if not is_attack else random.uniform(0, 5),       # duration
+                random.choice(["tcp", "udp", "icmp"]),                                    # protocol_type
+                random.randint(0, 5000) if not is_attack else random.randint(500, 50000), # src_bytes
+                random.randint(0, 5000) if not is_attack else random.randint(0, 1000),    # dst_bytes
+                random.randint(1, 50) if not is_attack else random.randint(50, 500),      # count
+                random.randint(1, 30) if not is_attack else random.randint(1, 5),         # srv_count
+                random.randint(1, 255),                                                    # dst_host_count
+                random.randint(1, 255),                                                    # dst_host_srv_count
+                round(random.uniform(0, 1), 4),                                            # dst_host_same_srv_rate
+                round(random.uniform(0, 1), 4),                                            # dst_host_diff_srv_rate
+                random.randint(40, 1500) if not is_attack else random.randint(40, 100),   # packet_size
+                random.uniform(0, 120),                                                    # flow_duration
+                random.randint(1, 100) if not is_attack else random.randint(100, 10000),  # fwd_packets
+                random.randint(1, 100) if not is_attack else random.randint(0, 10),       # bwd_packets
+                random.randint(100, 50000),                                                # fwd_bytes
+                random.randint(100, 50000),                                                # bwd_bytes
+                round(random.uniform(100, 100000), 2),                                    # flow_bytes_per_sec
+                round(random.uniform(1, 1000), 2),                                        # flow_packets_per_sec
+                round(random.uniform(40, 1500), 2),                                       # avg_packet_size
+                round(random.uniform(0, 5000), 2),                                        # fwd_iat_mean
+                label,                                                                     # label
+            ]
+            writer.writerow(row)
+
+    return {
+        "message": "Sample dataset generated successfully",
+        "path": path,
+        "rows": 1000,
+        "instruction": "Now use this path in the Train New Model input field"
+    }
+
 
 def get_pipeline():
     try:
