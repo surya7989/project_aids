@@ -150,7 +150,13 @@ async def train_model(
 
     pipeline = get_pipeline()
     try:
-        df = pipeline.load_dataset(dataset_path)
+        try:
+            df = pipeline.load_dataset(dataset_path)
+        except Exception as read_err:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Failed to parse CSV file. Make sure it is a valid comma-separated text file. Error: {str(read_err)}"
+            )
         if df.empty:
             raise HTTPException(status_code=400, detail="The dataset file is empty.")
 
