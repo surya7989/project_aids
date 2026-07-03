@@ -98,6 +98,15 @@ export const mlApi = {
     api.post('/ml/predict', flowData),
   activateModel: (id: string) => api.post(`/ml/models/${id}/activate`),
   generateSample: () => api.post('/ml/generate-sample'),
+  uploadDataset: (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post('/ml/upload-dataset', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+  },
 }
 
 export const simulationApi = {

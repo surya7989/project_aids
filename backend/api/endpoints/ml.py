@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, Query, BackgroundTasks, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 from ...database.session import get_session
@@ -7,8 +7,36 @@ from ...schemas.packet import MLModelResponse
 from ...repositories.threat_repository import MLModelRepository
 from ...middleware.auth_middleware import get_current_user, require_roles
 import os
+import shutil
 
 router = APIRouter()
+
+
+@router.post("/upload-dataset")
+async def upload_dataset(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_roles(["admin"])),
+):
+    """Upload a custom CSV dataset for ML training."""
+    if not file.filename.endswith('.csv'):
+        from fastapi.exceptions import HTTPException
+        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+
+    os.makedirs("datasets", exist_ok=True)
+
+    # Secure filename
+    safe_filename = "".join(c for c in file.filename if c.isalnum() or c in (".", "_", "-"))
+    file_path = os.path.join("datasets", f"uploaded_{safe_filename}")
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {
+        "message": "Dataset uploaded successfully",
+        "path": file_path,
+        "filename": file.filename
+    }
+
 
 
 @router.post("/generate-sample")

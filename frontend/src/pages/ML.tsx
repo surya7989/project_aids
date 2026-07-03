@@ -1,17 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Brain, Play, Activity, Database } from 'lucide-react'
+import { Brain, Play, Activity, Database, Upload } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { mlApi } from '@/services/api'
 import toast from 'react-hot-toast'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import type { MLModel } from '@/types'
 
 export default function ML() {
   const queryClient = useQueryClient()
   const [datasetPath, setDatasetPath] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { data: models = [], isLoading } = useQuery<MLModel[]>({
     queryKey: ['ml-models'],
@@ -30,6 +31,18 @@ export default function ML() {
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.detail || 'Failed to generate sample dataset')
+    },
+  })
+
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => mlApi.uploadDataset(file),
+    onSuccess: (res: any) => {
+      const path = res.data?.path
+      setDatasetPath(path)
+      toast.success(`Dataset "${res.data?.filename}" uploaded successfully! Click "Start Training" now!`)
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Failed to upload dataset file')
     },
   })
 
@@ -52,6 +65,17 @@ export default function ML() {
     },
   })
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (!file.name.endsWith('.csv')) {
+        toast.error('Only CSV files are supported')
+        return
+      }
+      uploadMutation.mutate(file)
+    }
+  }
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div>
@@ -64,26 +88,59 @@ export default function ML() {
           <CardTitle className="text-sm font-medium">Train New Model</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Step 1: Generate sample data */}
-          <div className="p-3 rounded-lg border border-dashed border-border bg-secondary/20">
-            <p className="text-xs text-muted-foreground mb-2">
-              <strong>Step 1:</strong> Generate a sample IDS dataset on the server (1000 rows of simulated network traffic)
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => generateMutation.mutate()}
-              disabled={generateMutation.isPending}
-            >
-              <Database className="h-4 w-4 mr-2" />
-              {generateMutation.isPending ? 'Generating...' : 'Generate Sample Dataset'}
-            </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Step 1A: Generate sample data */}
+            <div className="p-3 rounded-lg border border-dashed border-border bg-secondary/20 flex flex-col justify-between">
+              <div>
+                <p className="text-xs font-semibold mb-1">Option A: Simulated Test Data</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Generate a sample IDS dataset on the server (1000 rows of simulated network traffic)
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => generateMutation.mutate()}
+                disabled={generateMutation.isPending}
+                className="w-full"
+              >
+                <Database className="h-4 w-4 mr-2" />
+                {generateMutation.isPending ? 'Generating...' : 'Generate Sample Dataset'}
+              </Button>
+            </div>
+
+            {/* Step 1B: Upload custom CSV */}
+            <div className="p-3 rounded-lg border border-dashed border-border bg-secondary/20 flex flex-col justify-between">
+              <div>
+                <p className="text-xs font-semibold mb-1">Option B: Upload Your Own CSV</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Upload a custom CSV network packet dataset from your local machine
+                </p>
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".csv"
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadMutation.isPending}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadMutation.isPending ? 'Uploading...' : 'Upload Custom CSV'}
+              </Button>
+            </div>
           </div>
 
           {/* Step 2: Train */}
           <div className="p-3 rounded-lg border border-dashed border-border bg-secondary/20">
             <p className="text-xs text-muted-foreground mb-2">
-              <strong>Step 2:</strong> Enter dataset path (auto-filled after generating) and start training
+              <strong>Step 2:</strong> Enter dataset path (auto-filled after option A or B) and start training
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <input
