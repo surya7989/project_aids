@@ -2,7 +2,7 @@ services:
   - type: web
     name: ai-ids
     env: python
-    buildCommand: pip install --no-cache-dir -r requirements.txt
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT --workers 1
     envVars:
       - key: RENDER
