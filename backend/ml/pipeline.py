@@ -89,17 +89,17 @@ class MLPipeline:
 
         models = {
             "random_forest": RandomForestClassifier(
-                n_estimators=100, max_depth=20, random_state=42, n_jobs=-1
+                n_estimators=10, max_depth=5, random_state=42, n_jobs=1
             ),
             "gradient_boosting": GradientBoostingClassifier(
-                n_estimators=100, max_depth=5, learning_rate=0.1, random_state=42
+                n_estimators=10, max_depth=3, learning_rate=0.1, random_state=42
             ),
             "xgboost": xgb.XGBClassifier(
-                n_estimators=100, max_depth=6, learning_rate=0.1,
-                random_state=42, n_jobs=-1, eval_metric="logloss"
+                n_estimators=10, max_depth=3, learning_rate=0.1,
+                random_state=42, n_jobs=1, eval_metric="logloss"
             ),
             "isolation_forest": IsolationForest(
-                n_estimators=100, contamination=0.1, random_state=42, n_jobs=-1
+                n_estimators=10, contamination=0.1, random_state=42, n_jobs=1
             ),
         }
 
