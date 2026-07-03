@@ -48,6 +48,8 @@ export default function Analytics() {
                   <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip
                     contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    itemStyle={{ color: 'hsl(var(--foreground))' }}
                   />
                   <Bar dataKey="value" fill="#22c55e" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -71,6 +73,8 @@ export default function Analytics() {
                   </Pie>
                   <Tooltip
                     contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    itemStyle={{ color: 'hsl(var(--foreground))' }}
                   />
                 </PieChart>
               </ResponsiveContainer>

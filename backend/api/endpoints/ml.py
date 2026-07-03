@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, Query, BackgroundTasks, UploadFile, File
+from fastapi import APIRouter, Depends, Query, BackgroundTasks, UploadFile, File, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional, List
 from ...database.session import get_session
@@ -19,7 +19,6 @@ async def upload_dataset(
 ):
     """Upload a custom CSV dataset for ML training."""
     if not file.filename.endswith('.csv'):
-        from fastapi.exceptions import HTTPException
         raise HTTPException(status_code=400, detail="Only CSV files are supported")
 
     os.makedirs("datasets", exist_ok=True)
@@ -144,9 +143,7 @@ async def train_model(
     current_user: dict = Depends(require_roles(["admin"])),
     session: AsyncSession = Depends(get_session),
 ):
-    import os
     if not os.path.isfile(dataset_path):
-        from fastapi.exceptions import HTTPException
         raise HTTPException(status_code=400, detail=f"Dataset file not found: {dataset_path}")
 
     repo = MLModelRepository(session)
@@ -154,13 +151,31 @@ async def train_model(
     pipeline = get_pipeline()
     try:
         df = pipeline.load_dataset(dataset_path)
+        if df.empty:
+            raise HTTPException(status_code=400, detail="The dataset file is empty.")
+
+        if len(df.columns) < 2:
+            raise HTTPException(status_code=400, detail="The dataset must contain multiple feature columns and a target label column.")
+
         df = pipeline.clean_data(df)
         X, y = pipeline.preprocess(df)
+
+        if X.empty or X.shape[1] == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="The uploaded CSV has no valid numeric features for network threat training. Please upload a valid network capture CSV."
+            )
 
         from sklearn.model_selection import train_test_split
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
         results = pipeline.train_models(X_train, y_train)
+        if not results:
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to train any ML models on the provided dataset. Ensure your CSV contains valid training data."
+            )
+
         best_name = pipeline.select_best_model(results)
         best_model = results[best_name]["model"]
 
