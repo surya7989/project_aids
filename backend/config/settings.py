@@ -82,6 +82,16 @@ class Settings(BaseSettings):
             parsed = urlparse(url)
             params = parse_qs(parsed.query)
             params.pop("channel_binding", None)
+            
+            # Map sslmode to ssl (asyncpg expects 'ssl' rather than 'sslmode')
+            sslmode = params.pop("sslmode", None)
+            if sslmode and "ssl" not in params:
+                params["ssl"] = sslmode
+                
+            # If database is external Render PG (contains render.com) and ssl is not set, force ssl=require
+            if "render.com" in parsed.netloc and "ssl" not in params:
+                params["ssl"] = ["require"]
+                
             query = urlencode(params, doseq=True)
             clean = parsed._replace(query=query).geturl()
             if "+asyncpg" not in clean:
