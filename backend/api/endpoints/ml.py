@@ -5,7 +5,7 @@ from typing import Optional, List
 from ...database.session import get_session
 from ...schemas.packet import MLModelResponse
 from ...repositories.threat_repository import MLModelRepository
-from ...middleware.auth_middleware import get_current_user, require_roles
+from ...middleware.auth_middleware import get_current_user
 import os
 import shutil
 
@@ -15,7 +15,7 @@ router = APIRouter()
 @router.post("/upload-dataset")
 async def upload_dataset(
     file: UploadFile = File(...),
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
 ):
     """Upload a custom CSV dataset for ML training."""
     if not file.filename.endswith('.csv'):
@@ -40,7 +40,7 @@ async def upload_dataset(
 
 @router.post("/generate-sample")
 async def generate_sample_dataset(
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
 ):
     """Generate a sample IDS dataset for testing ML training."""
     import random
@@ -140,7 +140,7 @@ async def get_active_model(
 async def train_model(
     dataset_path: str = Query(..., description="Path to training dataset"),
     background_tasks: BackgroundTasks = None,
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
     if not os.path.isfile(dataset_path):
@@ -263,7 +263,7 @@ async def predict_from_flow(
 async def activate_model(
     model_id: str,
     session: AsyncSession = Depends(get_session),
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
 ):
     pipeline = get_pipeline()
     repo = MLModelRepository(session)

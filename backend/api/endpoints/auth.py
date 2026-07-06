@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
 from ...database.session import get_session
 from ...schemas.user import LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse, ChangePasswordRequest, UserCreate
 from ...services.auth_service import AuthService
 from ...middleware.auth_middleware import get_current_user
+
+
+class SetupCompanyRequest(BaseModel):
+    company_name: str
 
 router = APIRouter()
 
@@ -51,3 +56,16 @@ async def change_password(
 async def get_me(current_user: dict = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
     service = AuthService(session)
     return await service.get_current_user(current_user["sub"])
+
+
+@router.post("/setup-company")
+async def setup_company(
+    request: SetupCompanyRequest,
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    service = AuthService(session)
+    return await service.setup_company(current_user["sub"], request.company_name)
+
+
+

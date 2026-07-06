@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 
+import sqlalchemy as sa
 from .config.settings import settings
 from .core.logging import setup_logging, get_logger
 from .middleware.error_handler import global_exception_handler, AppException
@@ -70,6 +71,10 @@ async def lifespan(app: FastAPI):
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            # Add company_name column if missing (existing database migration)
+            await conn.execute(
+                sa.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)")
+            )
         logger.info("Database tables created")
         await seed_default_roles(engine)
     except Exception as e:

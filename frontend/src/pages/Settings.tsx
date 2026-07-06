@@ -2,7 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Bell } from 'lucide-react'
 import api from '@/services/api'
+import { useNotifications } from '@/hooks/useNotifications'
 
 export default function Settings() {
   const { data, isLoading } = useQuery({
@@ -13,7 +17,23 @@ export default function Settings() {
     },
   })
 
+  const { data: channelStatus } = useQuery({
+    queryKey: ['channel-status'],
+    queryFn: async () => {
+      const { data } = await api.get('/alerts/channels/status')
+      return data as Record<string, boolean>
+    },
+  })
+
+  const { enabled: notifEnabled, permission, enable, disable } = useNotifications()
+
   const settings: any[] = data?.items ?? []
+
+  const permissionLabel: Record<NotificationPermission, string> = {
+    granted: 'Granted',
+    denied: 'Blocked',
+    default: 'Not Requested',
+  }
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -22,6 +42,66 @@ export default function Settings() {
         <p className="text-sm text-muted-foreground">System configuration</p>
       </div>
 
+      {/* Browser Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm font-medium">
+            <Bell className="h-4 w-4" />
+            Browser Notifications
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm">
+                {notifEnabled ? 'Notifications are enabled' : 'Notifications are disabled'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Permission: {permissionLabel[permission]}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {permission === 'default' && (
+                <Button size="sm" onClick={enable}>
+                  <Bell className="h-4 w-4 mr-1" />
+                  Allow Notifications
+                </Button>
+              )}
+              {permission === 'granted' && (
+                <Switch checked={notifEnabled} onCheckedChange={(v) => (v ? enable() : disable())} />
+              )}
+              {permission === 'denied' && (
+                <p className="text-xs text-muted-foreground">Unblock in browser settings</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Channel Status */}
+      {channelStatus && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Notification Channels (Server)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {Object.entries(channelStatus).map(([channel, active]) => (
+                <div key={channel} className="flex items-center justify-between p-2 rounded-lg bg-secondary/50">
+                  <span className="text-sm capitalize">{channel}</span>
+                  {active ? (
+                    <Badge variant="success" className="text-xs">Connected</Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-xs">Not Configured</Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* System Config */}
       <Card>
         <CardHeader>
           <CardTitle className="text-sm font-medium">Configuration</CardTitle>

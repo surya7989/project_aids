@@ -4,7 +4,7 @@ from typing import Optional
 from ...database.session import get_session
 from ...schemas.user import UserResponse, UserListResponse, UserUpdate, RoleCreate, RoleResponse, UserRoleAssignment
 from ...repositories.user_repository import UserRepository, RoleRepository
-from ...middleware.auth_middleware import get_current_user, require_roles
+from ...middleware.auth_middleware import get_current_user
 
 router = APIRouter()
 
@@ -14,7 +14,7 @@ async def list_users(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
     repo = UserRepository(session)
@@ -30,7 +30,7 @@ async def list_users(
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: str,
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
     repo = UserRepository(session)
@@ -45,7 +45,7 @@ async def get_user(
 async def update_user(
     user_id: str,
     update_data: UserUpdate,
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
     repo = UserRepository(session)
@@ -59,7 +59,7 @@ async def update_user(
 @router.delete("/{user_id}")
 async def delete_user(
     user_id: str,
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
     repo = UserRepository(session)
@@ -73,7 +73,7 @@ async def delete_user(
 @router.post("/roles", response_model=RoleResponse)
 async def create_role(
     role_data: RoleCreate,
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
     repo = RoleRepository(session)
@@ -83,7 +83,7 @@ async def create_role(
 
 @router.get("/roles", response_model=list[RoleResponse])
 async def list_roles(
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
     repo = RoleRepository(session)
@@ -94,7 +94,7 @@ async def list_roles(
 @router.post("/assign-role")
 async def assign_role(
     assignment: UserRoleAssignment,
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
     repo = UserRepository(session)

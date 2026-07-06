@@ -15,9 +15,8 @@ const fadeUp = (delay = 0) => ({
   transition: { delay, duration: 0.4, ease: 'easeOut' },
 })
 
-export default function Login() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+export default function SignUp() {
+  const [form, setForm] = useState({ email: '', username: '', password: '', full_name: '' })
   const [showPassword, setShowPassword] = useState(false)
   const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
@@ -26,15 +25,25 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!form.email || !form.username || !form.password) return
     setLoading(true)
     try {
-      const { data } = await authApi.login(username, password)
-      setAuth(data.user, { access_token: data.access_token, refresh_token: data.refresh_token, token_type: 'bearer' })
+      const { data } = await authApi.register({
+        email: form.email,
+        username: form.username,
+        password: form.password,
+        full_name: form.full_name || undefined,
+      })
+      setAuth(data.user, {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        token_type: 'bearer',
+      })
       queryClient.invalidateQueries()
-      toast.success('Login successful')
+      toast.success('Account created!')
       navigate(data.user.company_name ? '/dashboard' : '/setup-company')
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Login failed')
+      toast.error(err.response?.data?.message || 'Registration failed')
     } finally {
       setLoading(false)
     }
@@ -60,22 +69,41 @@ export default function Login() {
               </div>
             </motion.div>
             <motion.div {...fadeUp(0.15)}>
-              <CardTitle className="text-2xl">
-                <span className="text-gradient">AI-IDS</span>
-              </CardTitle>
+              <CardTitle className="text-2xl">Create Account</CardTitle>
             </motion.div>
             <motion.div {...fadeUp(0.2)}>
-              <CardDescription>AI-Driven Intrusion Detection System</CardDescription>
+              <CardDescription>Set up your AI-IDS security platform</CardDescription>
             </motion.div>
           </CardHeader>
           <CardContent>
             <motion.form {...fadeUp(0.25)} onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Username / Email</label>
+                <label className="text-sm font-medium">Full Name</label>
                 <input
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={form.full_name}
+                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-shadow"
+                  placeholder="John Doe"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-shadow"
+                  placeholder="admin@company.com"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Username</label>
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
                   className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-shadow"
                   placeholder="admin"
                   required
@@ -86,11 +114,12 @@ export default function Login() {
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
                     className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-1 focus:ring-ring pr-10 transition-shadow"
-                    placeholder="••••••••"
+                    placeholder="Min. 8 characters"
                     required
+                    minLength={8}
                   />
                   <button
                     type="button"
@@ -102,18 +131,15 @@ export default function Login() {
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading ? 'Creating account...' : 'Create Account'}
               </Button>
             </motion.form>
-            <motion.div {...fadeUp(0.3)} className="mt-4 text-center space-y-2">
-              <p className="text-xs text-muted-foreground">Demo: admin / Admin123!</p>
-              <p className="text-sm text-muted-foreground">
-                Don't have an account?{' '}
-                <Link to="/signup" className="text-primary hover:underline">
-                  Sign up
-                </Link>
-              </p>
-            </motion.div>
+            <motion.p {...fadeUp(0.3)} className="mt-4 text-sm text-center text-muted-foreground">
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary hover:underline">
+                Sign in
+              </Link>
+            </motion.p>
           </CardContent>
         </Card>
       </motion.div>

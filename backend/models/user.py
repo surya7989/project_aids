@@ -26,6 +26,7 @@ class User(BaseModel):
     last_login: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     failed_login_attempts: Mapped[int] = mapped_column(default=0, nullable=False)
     locked_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    company_name: Mapped[str] = mapped_column(String(255), nullable=True)
     phone: Mapped[str] = mapped_column(String(50), nullable=True)
     avatar_url: Mapped[str] = mapped_column(String(500), nullable=True)
     preferences: Mapped[dict] = mapped_column(Text, nullable=True)

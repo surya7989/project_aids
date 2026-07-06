@@ -5,7 +5,7 @@ from ...database.session import get_session
 from ...schemas.packet import AlertResponse, AlertListResponse
 from ...models.alert import Alert
 from ...repositories.base import BaseRepository
-from ...middleware.auth_middleware import get_current_user, require_roles
+from ...middleware.auth_middleware import get_current_user
 
 router = APIRouter()
 

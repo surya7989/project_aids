@@ -4,7 +4,7 @@ from typing import Optional
 from ...database.session import get_session
 from ...models.audit import AuditLog
 from ...repositories.base import BaseRepository
-from ...middleware.auth_middleware import get_current_user, require_roles
+from ...middleware.auth_middleware import get_current_user
 
 router = APIRouter()
 
@@ -16,7 +16,7 @@ async def list_logs(
     action: Optional[str] = None,
     resource: Optional[str] = None,
     session: AsyncSession = Depends(get_session),
-    current_user: dict = Depends(require_roles(["admin"])),
+    current_user: dict = Depends(get_current_user),
 ):
     repo = BaseRepository(AuditLog, session)
     filters = {"is_deleted": False}

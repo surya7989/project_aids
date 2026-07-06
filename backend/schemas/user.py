@@ -35,6 +35,7 @@ class UserResponse(UserBase):
     last_login: Optional[datetime] = None
     created_at: datetime
     roles: List[str] = []
+    company_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

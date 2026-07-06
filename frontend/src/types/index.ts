@@ -8,6 +8,7 @@ export interface User {
   roles: string[]
   last_login?: string
   created_at: string
+  company_name?: string
 }
 
 export interface AuthTokens {

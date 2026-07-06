@@ -52,6 +52,8 @@ export const authApi = {
     api.post('/auth/refresh', { refresh_token }),
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
+  setupCompany: (company_name: string) =>
+    api.post('/auth/setup-company', { company_name }),
 }
 
 export const dashboardApi = {

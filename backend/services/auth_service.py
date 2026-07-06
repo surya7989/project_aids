@@ -78,6 +78,7 @@ class AuthService:
                 "is_verified": user.is_verified,
                 "created_at": user.created_at,
                 "roles": roles,
+                "company_name": user.company_name,
             },
         }
 
@@ -127,6 +128,7 @@ class AuthService:
                 "created_at": user.created_at,
                 "roles": roles,
                 "last_login": user.last_login,
+                "company_name": user.company_name,
             },
         }
 
@@ -160,6 +162,17 @@ class AuthService:
     async def logout(self, user_id: str) -> None:
         await self.token_repo.revoke_all_for_user(user_id)
 
+    async def setup_company(self, user_id: str, company_name: str) -> dict:
+        user = await self.user_repo.get(user_id)
+        if not user:
+            raise NotFoundException("User")
+        if user.company_name:
+            raise ConflictException("Company name already set")
+        user.company_name = company_name
+        await self.session.flush()
+        await self._log_audit(str(user.id), "COMPANY_SETUP", "users", str(user.id), {"company_name": company_name})
+        return {"company_name": company_name}
+
     async def change_password(self, user_id: str, current_password: str, new_password: str) -> None:
         user = await self.user_repo.get(user_id)
         if not user:
@@ -188,6 +201,7 @@ class AuthService:
             "roles": roles,
             "created_at": user.created_at,
             "last_login": user.last_login,
+            "company_name": user.company_name,
         }
 
     async def _store_refresh_token(self, user_id: str, token: str) -> None:
